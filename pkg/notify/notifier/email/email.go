@@ -169,6 +169,19 @@ func (n *Notifier) Notify(ctx context.Context, data *template.Data) error {
 		return utils.Errorf("Unknown message type, %s", n.receiver.TmplType)
 	}
 
+	s := data.CommonLabels[constants.EmailReceiverList]
+	var emailReceivers []string
+	// 如果emailReceivers不为空，就将当前receiver加入
+	if !utils.StringIsNil(s) {
+		emailReceivers = strings.Split(s, ",")
+		emailReceivers = append(emailReceivers, n.receiver.Name)
+	} else {
+		emailReceivers = append(emailReceivers, n.receiver.Name)
+	}
+	data.CommonLabels[constants.EmailReceiverList] = strings.Join(emailReceivers, ",")
+
+	_ = level.Info(n.logger).Log("msg", "emailReceivers", emailReceivers)
+
 	group := async.NewGroup(ctx)
 	for _, t := range n.receiver.To {
 		to := t

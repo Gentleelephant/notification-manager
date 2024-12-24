@@ -75,14 +75,14 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 	_ = level.Debug(l).Log("msg", "Start notify stage", "seq", ctx.Value("seq"))
 
 	input := data.(map[internal.Receiver][]*template.Data)
-	alertMap := make(map[string][]*template.Alert)
-	for r, dataList := range input {
-		receiver := r
+	alertMap := make(map[string]*template.Alert)
+	for _, dataList := range input {
+		//receiver := r
 		ds := convertor.DeepClone(dataList)
-		s.addExtensionLabels(receiver, ds)
+		//s.addExtensionLabels(receiver, ds)
 		for _, d := range ds {
 			for _, alert := range d.Alerts {
-				alertMap[alert.ID] = append(alertMap[alert.ID], alert)
+				alertMap[alert.ID] = alert
 			}
 		}
 	}
@@ -94,17 +94,17 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 
 		for _, alert := range alerts {
 			if a := alertMap[alert.ID]; a != nil {
-				for _, t := range a {
-					t.NotifySuccessful = true
-				}
+				a.NotifySuccessful = true
 			}
 		}
 	}
 
+	var hisData []*template.Data
 	group := async.NewGroup(ctx)
 	for k, v := range input {
 		receiver := k
 		ds := convertor.DeepClone(v)
+		hisData = append(hisData, ds...)
 		s.addExtensionLabels(receiver, ds)
 		nf, err := factories[receiver.GetType()](l, receiver, s.notifierCtl)
 		if err != nil {
@@ -124,6 +124,16 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 		}
 	}
 
+	// 处理数据要返回给通知历史的数据
+	// 2. 将receivers保存到数据中
+	for _, d := range hisData {
+		emailReceivers := d.CommonLabels[constants.EmailReceiverList]
+		for _, alert := range d.Alerts {
+			//delete(alertMap[alert.ID].Labels, constants.ReceiverName)
+			alertMap[alert.ID].Labels[constants.EmailReceiverList] = emailReceivers
+		}
+	}
+
 	return ctx, alertMap, group.Wait()
 }
 
@@ -132,9 +142,6 @@ func (s *notifyStage) addExtensionLabels(receiver internal.Receiver, data []*tem
 		for _, alert := range d.Alerts {
 			if alert.Labels[constants.ReceiverName] == "" {
 				alert.Labels[constants.ReceiverName] = receiver.GetName()
-			}
-			if alert.Labels[constants.ReceiverType] == "" {
-				alert.Labels[constants.ReceiverType] = receiver.GetType()
 			}
 		}
 	}

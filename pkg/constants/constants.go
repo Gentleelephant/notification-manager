@@ -39,8 +39,9 @@ const (
 	AlertSummary   = "summary"
 	AlertSummaryCN = "summaryCn"
 
-	ReceiverName = "receiver"
-	ReceiverType = "receiver_type"
+	ReceiverName      = "receiver"
+	ReceiverType      = "receiver_type"
+	EmailReceiverList = "email_receiver_list"
 
 	Verify       = "verify"
 	Notification = "notification"
