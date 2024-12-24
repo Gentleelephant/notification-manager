@@ -2,6 +2,7 @@ package notify
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 
@@ -127,6 +128,8 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 			})
 		}
 	}
+
+	fmt.Printf("emailReceivers: %+v\n", emailReceivers)
 
 	for _, alert := range alertMap {
 		if alert.NotifySuccessful {
