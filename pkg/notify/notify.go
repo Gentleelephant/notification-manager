@@ -2,6 +2,7 @@ package notify
 
 import (
 	"context"
+	"fmt"
 	"sync"
 
 	"github.com/duke-git/lancet/v2/convertor"
@@ -123,6 +124,8 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 			})
 		}
 	}
+
+	fmt.Printf("hisData: %+v\n", hisData)
 
 	// 处理数据要返回给通知历史的数据
 	// 2. 将receivers保存到数据中
