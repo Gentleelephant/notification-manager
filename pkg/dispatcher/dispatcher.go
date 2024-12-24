@@ -2,6 +2,8 @@ package dispatcher
 
 import (
 	"context"
+	"fmt"
+	json "github.com/json-iterator/go"
 	"time"
 
 	"github.com/go-kit/kit/log"
@@ -127,6 +129,9 @@ func (d *Dispatcher) worker(ctx context.Context, data interface{}, stopCh chan s
 	if err != nil {
 		_ = level.Error(d.l).Log("msg", "Dispatcher: process alerts failed", "seq", ctx.Value("seq"))
 	}
+
+	marshal, _ := json.Marshal(output)
+	fmt.Printf("output: %s\n", string(marshal))
 
 	go d.execHistoryStage(ctx.Value("seq"), output)
 
