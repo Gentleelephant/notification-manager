@@ -2,7 +2,7 @@ package notify
 
 import (
 	"context"
-	"fmt"
+	"strings"
 	"sync"
 
 	"github.com/duke-git/lancet/v2/convertor"
@@ -100,7 +100,8 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 		}
 	}
 
-	var hisData []*template.Data
+	var emailReceivers []string
+
 	group := async.NewGroup(ctx)
 	for k, v := range input {
 		receiver := k
@@ -114,30 +115,38 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 			})
 			continue
 		}
+		if receiver.GetType() == constants.Email {
+			emailReceivers = append(emailReceivers, receiver.GetName())
+		}
 		nf.SetSentSuccessfulHandler(&handler)
 
 		for _, d := range ds {
 			alert := d
-			hisData = append(hisData, d)
 			group.Add(func(stopCh chan interface{}) {
 				stopCh <- nf.Notify(ctx, alert)
 			})
 		}
 	}
 
-	fmt.Printf("hisData: %+v\n", hisData)
-
-	// 处理数据要返回给通知历史的数据
-	// 2. 将receivers保存到数据中
-	for _, d := range hisData {
-		emailReceivers := d.CommonLabels[constants.EmailReceiverList]
-		level.Debug(l).Log("msg", "====>common label emailReceivers<====:", emailReceivers)
-		for _, alert := range d.Alerts {
-			//delete(alertMap[alert.ID].Labels, constants.ReceiverName)
-			alertMap[alert.ID].Labels[constants.EmailReceiverList] = emailReceivers
-			level.Debug(l).Log("msg", "====>emailReceivers<====:", emailReceivers)
+	for _, alert := range alertMap {
+		if alert.NotifySuccessful {
+			alert.Labels[constants.EmailReceiverList] = strings.Join(emailReceivers, ",")
 		}
 	}
+
+	//fmt.Printf("hisData: %+v\n", hisData)
+	//
+	//// 处理数据要返回给通知历史的数据
+	//// 2. 将receivers保存到数据中
+	//for _, d := range hisData {
+	//	emailReceivers := d.CommonLabels[constants.EmailReceiverList]
+	//	level.Debug(l).Log("msg", "====>common label emailReceivers<====:", emailReceivers)
+	//	for _, alert := range d.Alerts {
+	//		//delete(alertMap[alert.ID].Labels, constants.ReceiverName)
+	//		alertMap[alert.ID].Labels[constants.EmailReceiverList] = emailReceivers
+	//		level.Debug(l).Log("msg", "====>emailReceivers<====:", emailReceivers)
+	//	}
+	//}
 
 	return ctx, alertMap, group.Wait()
 }
