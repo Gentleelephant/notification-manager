@@ -104,7 +104,6 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 	for k, v := range input {
 		receiver := k
 		ds := convertor.DeepClone(v)
-		hisData = append(hisData, ds...)
 		s.addExtensionLabels(receiver, ds)
 		nf, err := factories[receiver.GetType()](l, receiver, s.notifierCtl)
 		if err != nil {
@@ -118,6 +117,7 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 
 		for _, d := range ds {
 			alert := d
+			hisData = append(hisData, d)
 			group.Add(func(stopCh chan interface{}) {
 				stopCh <- nf.Notify(ctx, alert)
 			})
@@ -128,9 +128,11 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 	// 2. 将receivers保存到数据中
 	for _, d := range hisData {
 		emailReceivers := d.CommonLabels[constants.EmailReceiverList]
+		level.Info(l).Log("msg", "====>common label emailReceivers<====:", emailReceivers)
 		for _, alert := range d.Alerts {
 			//delete(alertMap[alert.ID].Labels, constants.ReceiverName)
 			alertMap[alert.ID].Labels[constants.EmailReceiverList] = emailReceivers
+			level.Info(l).Log("msg", "====>emailReceivers<====:", emailReceivers)
 		}
 	}
 
