@@ -180,7 +180,7 @@ func (n *Notifier) Notify(ctx context.Context, data *template.Data) error {
 	}
 	data.CommonLabels[constants.EmailReceiverList] = strings.Join(emailReceivers, ",")
 
-	_ = level.Info(n.logger).Log("msg", "emailReceivers", emailReceivers)
+	_ = level.Debug(n.logger).Log("msg", "emailReceivers:", emailReceivers)
 
 	group := async.NewGroup(ctx)
 	for _, t := range n.receiver.To {

@@ -128,11 +128,11 @@ func (s *notifyStage) Exec(ctx context.Context, l log.Logger, data interface{}) 
 	// 2. 将receivers保存到数据中
 	for _, d := range hisData {
 		emailReceivers := d.CommonLabels[constants.EmailReceiverList]
-		level.Info(l).Log("msg", "====>common label emailReceivers<====:", emailReceivers)
+		level.Debug(l).Log("msg", "====>common label emailReceivers<====:", emailReceivers)
 		for _, alert := range d.Alerts {
 			//delete(alertMap[alert.ID].Labels, constants.ReceiverName)
 			alertMap[alert.ID].Labels[constants.EmailReceiverList] = emailReceivers
-			level.Info(l).Log("msg", "====>emailReceivers<====:", emailReceivers)
+			level.Debug(l).Log("msg", "====>emailReceivers<====:", emailReceivers)
 		}
 	}
 
